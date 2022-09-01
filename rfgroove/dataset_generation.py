@@ -45,6 +45,13 @@ def gaussian_multidimensional(c, size, n_features_per_groups=5):
 def correlation_matrix(n, c):
     """
     Return a correlation matrix
+
+    Args:
+        n: the nimber of features
+        c: the correlation between the features
+    
+    Returns:
+        Numpy array of shape (n, n)
     """
     mat = np.eye(n)
     mat[mat==0] = c

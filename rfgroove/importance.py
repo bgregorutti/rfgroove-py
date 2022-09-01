@@ -11,9 +11,9 @@ def error(model, true, pred):
     Compute the error: MSE for regression and class error rate for classification
 
     Args:
-        model
-        true
-        pred
+        model: an object from scikit-learn ensemble estimator
+        true: the true values
+        pred: the predicted values
     
     Returns:
         The model error
@@ -28,9 +28,9 @@ def get_oob_samples(n, random_state, max_samples):
     Get the Out-Of-Bag indices
 
     Args:
-        n
-        random_state
-        max_samples
+        n: the number of samples in the full dataset
+        random_state: the randomness of the bootstrap samples
+        max_samples: maximum number of samples in the bootstrap sets
     
     Returns:
         Numpy array of indices indicates tha OOB sample
@@ -51,9 +51,9 @@ def permute_group(X, group, n_repeats):
     Permute the values of a group of features together
 
     Args:
-        X
-        group
-        n_repeats
+        X: features data
+        group: a list of lists, the indices of the groupes of features
+        n_repeats: number of repeats in the permutation
     
     Returns
         Numpy array with permuted values within a group of features
@@ -78,12 +78,12 @@ def grouped_importance(model, X, y, groups, n_repeats=5, n_jobs=None):
     Grouped permutation importance
 
     Args:
-        model
-        X
-        y
-        groups
-        n_repeats
-        n_jobs
+        model: an object from scikit-learn ensemble estimator
+        X: features data
+        y: target data
+        groups: a list of lists, the indices of the groupes of features
+        n_repeats: number of repeats in the permutation, default: 5
+        n_jobs: the number of jobs to run in parallel. None means no parallel computing and -1 means using all processors. Default: None
     
     Returns:
         Numpy array of the importance of each group
@@ -101,12 +101,12 @@ def grouped_importance_tree(tree, X, y, groups, n_repeats, max_samples):
     Grouped permutation importance of a tree
 
     Args:
-        model
-        X
-        y
-        groups
-        n_repeats
-        max_samples
+        model: an object from scikit-learn ensemble estimator
+        X: features data
+        y: target data
+        groups: a list of lists, the indices of the groupes of features
+        n_repeats: number of repeats in the permutation, default: 5
+        max_samples: maximum number of samples in the bootstrap sets
     
     Returns:
         Numpy array of the importance of each group for the current tree
