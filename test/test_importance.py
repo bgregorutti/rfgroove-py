@@ -4,7 +4,7 @@ Test module
 
 import numpy as np
 from sklearn.datasets import make_sparse_uncorrelated
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 
 from rfgroove.importance import grouped_importance, permute_group
 from rfgroove.dataset_generation import gaussian_multidimensional
@@ -18,18 +18,23 @@ def test_grouped_importance():
     n_features = 10
 
     X, y = make_sparse_uncorrelated(n_samples=n_samples, n_features=n_features, random_state=0)
-    regr = RandomForestRegressor(n_estimators=1000, oob_score=True, max_samples=.1)
-    regr.fit(X, y)
 
-    # TEST 1 / Importance with groups of size 1
-    groups = [[k] for k in range(n_features)]
-    imp = grouped_importance(regr, X, y, groups)
+    estimators = [
+        ExtraTreesRegressor(n_estimators=1000, bootstrap=True, oob_score=True, max_samples=.1),
+        RandomForestRegressor(n_estimators=1000, bootstrap=True, oob_score=True, max_samples=.1)
+    ]
+    for regr in estimators:
+        regr.fit(X, y)
 
-    # Test the size of the output
-    assert len(imp) == len(groups)
-    
-    # Test if the actual relevant features have a larger importance than the other
-    assert min(imp[:4]) > max(imp[4:])
+        # TEST 1 / Importance with groups of size 1
+        groups = [[k] for k in range(n_features)]
+        imp = grouped_importance(regr, X, y, groups)
+
+        # Test the size of the output
+        assert len(imp) == len(groups)
+        
+        # Test if the actual relevant features have a larger importance than the other
+        assert min(imp[:4]) > max(imp[4:])
 
     # TEST 2 / Group the four most relevant features together
     groups = [[0, 1, 2, 3]] + [[k] for k in range(4, n_features)]

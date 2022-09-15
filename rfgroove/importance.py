@@ -4,24 +4,8 @@ Grouped permutation importance module
 
 from joblib import Parallel, delayed
 import numpy as np
-from sklearn.metrics import accuracy_score, mean_squared_error
 
-def error(model, true, pred):
-    """
-    Compute the error: MSE for regression and class error rate for classification
-
-    Args:
-        model: an object from scikit-learn ensemble estimator
-        true: the true values
-        pred: the predicted values
-    
-    Returns:
-        The model error
-    """
-    if hasattr(model, "classes_"):
-        return 1 - accuracy_score(true, pred)
-    else:
-        return mean_squared_error(true, pred)
+from rfgroove.evaluation import error
 
 def get_oob_samples(n, random_state, max_samples):
     """
@@ -37,7 +21,10 @@ def get_oob_samples(n, random_state, max_samples):
     """
     # Get the inbag sample indexes
     seed = np.random.RandomState(random_state)
-    nr_samples = max_samples if max_samples > 1 else int(max_samples * n)
+    if not max_samples:
+        nr_samples = 1
+    else:
+        nr_samples = max_samples if max_samples > 1 else int(max_samples * n)
     inbag = seed.randint(0, n, nr_samples)
 
     # The get the OOB indexes
@@ -92,13 +79,15 @@ def grouped_importance(model, X, y, groups, n_repeats=5, n_jobs=None):
     if not n_jobs or n_jobs == 1:
         importances = np.array([grouped_importance_tree(tree, X, y, groups, n_repeats, model.max_samples) for tree in model.estimators_])
     else:
-        importances = Parallel(n_jobs=n_jobs, verbose=1)(delayed(grouped_importance_tree)(tree, X, y, groups, n_repeats, model.max_samples) for tree in model.estimators_)
+        importances = Parallel(n_jobs=n_jobs, verbose=0)(delayed(grouped_importance_tree)(tree, X, y, groups, n_repeats, model.max_samples) for tree in model.estimators_)
 
     return np.mean(importances, axis=0)
 
 def grouped_importance_tree(tree, X, y, groups, n_repeats, max_samples):
     """
-    Grouped permutation importance of a tree
+    Grouped permutation importance of a tree.
+    Note: the "groups" argument is a list of list of indices (raw data indices). So we pass the entire features data and compute the support of the features, 
+    i.e. the "activated" features for using the model.predict method. Then the permutation is done on the entire feature
 
     Args:
         model: an object from scikit-learn ensemble estimator
@@ -111,21 +100,27 @@ def grouped_importance_tree(tree, X, y, groups, n_repeats, max_samples):
     Returns:
         Numpy array of the importance of each group for the current tree
     """
+
+    # Get the support, i.e. the activated features. Important for selection purpose
+    support = np.zeros(X.shape[1], dtype=bool)
+    indices = [k for group in groups for k in group] # expand the list of lists "groups" into a list of indices
+    support[indices] = True
+
     # Get the OOB samples
     oob_indexes = get_oob_samples(X.shape[0], tree.random_state, max_samples)
     X_oob = X[oob_indexes]
     y_oob = y[oob_indexes]
 
     # Predict with the current tree and compute the error
-    pred = tree.predict(X_oob)
+    pred = tree.predict(X_oob[:, support]) # Predict on the activated features only
     err = error(tree, y_oob, pred)
 
     # Loop over the groups
     importance_tree = []
     for group in groups:
         # Permute the group, predict and compute the error again
-        X_permuted = permute_group(X_oob, group, n_repeats=n_repeats)
-        pred = tree.predict(X_permuted)
+        X_permuted = permute_group(X_oob, group, n_repeats=n_repeats) # Permute the entire feature data
+        pred = tree.predict(X_permuted[:, support]) # Predict on the activated features only
         err_permuted = error(tree, y_oob, pred)
         
         # Compute the error increase for the current tree
