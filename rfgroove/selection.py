@@ -108,20 +108,3 @@ class RFE():
         self.support = support
 
         return self
-
-if __name__ == "__main__":
-
-    from sklearn.ensemble import RandomForestRegressor
-    from sklearn.datasets import make_sparse_uncorrelated
-    from rfgroove.dataset_generation import gaussian_multidimensional
-
-    # X, y = make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=0)
-    # groups = groups = [[0, 1, 2, 3]] + [[k] for k in range(4, 10)]
-
-    X, y = gaussian_multidimensional(c=.5, size=1000, n_features_per_groups=5)
-    groups = [list(range(5)), list(range(5, 10))] + [[k] for k in range(10, 15)]
-
-    base = RandomForestRegressor(n_estimators=1000, bootstrap=True, oob_score=True, max_samples=.1)
-    selector = RFE(base, groups, n_jobs=-1)
-    selector.fit(X, y)
-

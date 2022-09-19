@@ -87,7 +87,7 @@ def grouped_importance_tree(tree, X, y, groups, n_repeats, max_samples):
     """
     Grouped permutation importance of a tree.
     Note: the "groups" argument is a list of list of indices (raw data indices). So we pass the entire features data and compute the support of the features, 
-    i.e. the "activated" features for using the model.predict method. Then the permutation is done on the entire feature
+    i.e. the "activated" features for using the model.predict method. Then the permutation is done on the entire feature list
 
     Args:
         model: an object from scikit-learn ensemble estimator

@@ -1,5 +1,5 @@
 """
-Test module
+Test the module importance.py
 """
 
 import numpy as np
